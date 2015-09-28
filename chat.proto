@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+option java_package = "com.chat";
+
+package Chat;
+
+service MyChat{
+    rpc login (Username) returns (LoginSuccess){}
+    rpc join (ChannelName) returns (IsSuccess){}
+    rpc leave (ChannelName) returns (IsSuccess){}
+    rpc sendMessage (Message) returns (IsSuccess) {}
+    rpc getMessages (Username) returns (Messages) {}
+}
+
+message Username {
+    string username = 1;
+}
+
+message LoginSuccess{
+    bool success = 1;
+    string username = 2;
+}
+
+message ChannelName {
+    string username = 1;
+    string channel = 2;
+}
+
+message IsSuccess {
+    bool success = 1;
+}
+
+message Message {
+    string username = 1;
+    string channel = 2;
+    string msg = 3;
+}
+
+message Messages {
+    bool success = 1;
+    repeated string messages = 2;
+}
