@@ -5,12 +5,15 @@
 var grpc = require('grpc');
 var chat_proto = grpc.load('./chat.proto').Chat;
 
+//Global Variables
 var userList = [];
 var channellList = {};
 var inbox = {};
 var anonymousCount = 0;
 
 // Implementasi endpoint
+
+//Login
 function Login(call, callback){
     var user;
     if (call.request.username === ''){
@@ -27,6 +30,7 @@ function Login(call, callback){
     callback(null, {success : true, username : user});
 }
 
+//Join channel
 function Join(call, callback){
     var username = call.request.username;
     if (userList.indexOf(username) == -1)
@@ -45,6 +49,7 @@ function Join(call, callback){
     }
 }
 
+//Leave channel
 function Leave(call, callback){
     var username = call.request.username;
     var channel = call.request.channel;
@@ -64,6 +69,7 @@ function Leave(call, callback){
     }
 }
 
+//Send message to a channel
 function Send(call, callback){
     var username = call.request.username;
     var channel = call.request.channel;
@@ -74,18 +80,16 @@ function Send(call, callback){
     } else {
         var members = channellList[channel];
         for (var i = 0; i < members.length; i++){
-            if (members[i] != username){
-                if (!(members[i] in inbox)){
-                    inbox[members[i]] = [];
-                }
-                inbox[members[i]].push("@" + channel + " " + username + " : " + msg);
+            if (!(members[i] in inbox)){
+                inbox[members[i]] = [];
             }
+            inbox[members[i]].push("@" + channel + " " + username + " : " + msg);
         }
         callback(null, {success: true});
     }
 }
 
-
+//Get message for an user
 function getMessages(call, callback){
     var user = call.request.username;
 
@@ -102,6 +106,31 @@ function getMessages(call, callback){
     }
 }
 
+//Broadcast message to all channel user subscribed
+function broadcastMessage(call, callback){
+    var username = call.request.username;
+    var message = call.request.msg;
+
+    if (userList.indexOf(username) == -1){
+        callback(null, {success: false});
+    } else {
+        for (var channel in channellList) {
+            var members = channellList[channel];
+            if (members.indexOf(username) != -1) {
+                for (var i = 0; i < members.length; i++) {
+                    if (members[i] != username) {
+                        if (!(members[i] in inbox)) {
+                            inbox[members[i]] = [];
+                        }
+                        inbox[members[i]].push("@" + channel + " " + username + " : " + message);
+                    }
+                }
+            }
+        }
+        callback(null, {success: true});
+    }
+}
+
 
 //Main
 var server = new grpc.Server();
@@ -110,7 +139,8 @@ server.addProtoService(chat_proto.MyChat.service, {
     join : Join,
     leave : Leave,
     sendMessage : Send,
-    getMessages : getMessages
+    getMessages : getMessages,
+    broadcastMessage : broadcastMessage
 });
 
 server.bind('0.0.0.0:8080', grpc.ServerCredentials.createInsecure());
