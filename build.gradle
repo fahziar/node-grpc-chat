@@ -1,0 +1,46 @@
+buildscript {
+  repositories {
+    maven {
+      url "https://plugins.gradle.org/m2/"
+    }
+  }
+  dependencies {
+    classpath "com.moowork.gradle:gradle-node-plugin:0.11"
+  }
+}
+
+apply plugin: "com.moowork.node"
+
+node {
+  version = '0.12.6'
+  npmVersion = '2.10.1'
+  download = true
+}
+
+//npm dependencies caching for a faster build
+task npmCacheConfig(type: NpmTask) {
+    description = "Configure the NPM cache"
+    def npmCacheDir = "${gradle.getGradleUserHomeDir()}/caches/npm"
+    outputs.files file(npmCacheDir)
+    args = [ 'config', 'set', 'cache', npmCacheDir ]
+}
+
+//Install npm packages from
+task npmPackages(type: NpmTask, dependsOn: npmCacheConfig) {
+    description = "Install Node.js packages"
+    args = [ 'install' ]
+    inputs.files file('package.json')
+    outputs.files file('node_modules')
+}
+
+task setup(dependsOn: npmPackages) {
+	println "Install dependencies."
+} 
+
+task runServer(type: NodeTask) {
+    script = file('server.js')
+}
+
+task runClient(type: NodeTask) {
+    script = file('client.js')
+}
