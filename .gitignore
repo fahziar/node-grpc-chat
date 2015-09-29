@@ -2,3 +2,4 @@ node_modules
 .gradle
 client
 server
+tmp
