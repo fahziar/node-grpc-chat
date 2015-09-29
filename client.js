@@ -14,11 +14,12 @@ var rl = readline.createInterface({
 //Constant
 var GET_MESSAGES_INTERVAL = 500;
 
-//Variabel global
+//Global Variables
 var client = new chat_proto.MyChat('localhost:8080', grpc.Credentials.createInsecure());
 var username;
 var timeoutId;
 
+//Get random userneam first
 client.login({username: ""}, function(err, response){
    if (err){
        console.log("Error login in");
@@ -32,8 +33,11 @@ client.login({username: ""}, function(err, response){
            console.log("/JOIN <channel name>: Join channel");
            console.log("/LEAVE <channel name>: Leave channel");
            console.log("/NICK <your nick>: Change your nick name. Note: Everytime you change your nick, you must rejoin your subscribed channel");
-           console.log("@<channel name>: Send message to channel");
            console.log("/EXIT: Exit from application");
+           console.log('');
+           console.log('To send message:');
+           console.log("@<channel name>: Send message to a channel");
+           console.log("To broadcast to all channel you have joined, just type your message and press enter");
            console.log("===============================================");
            console.log("You are logged in as " + response.username);
            console.log("");
@@ -44,8 +48,12 @@ client.login({username: ""}, function(err, response){
    }
 });
 
+//Register event on user input, and process it
 function readCommand(){
     rl.on('line', function(line){
+        //Process command
+
+        //Join Channel
         if (line.indexOf('/JOIN') == 0){
             client.join({username : username, channel : line.substr(6)}, function (err, response) {
                 if (err){
@@ -58,6 +66,7 @@ function readCommand(){
                     }
                 }
             });
+        //Leave channel
         } else if (line.indexOf('/LEAVE') == 0){
             var channel = line.substr(7);
             if (channel == ''){
@@ -75,6 +84,7 @@ function readCommand(){
                 }
             });
             console.log("Leaving channel");
+        //Change nikcname
         } else if (line.indexOf('/NICK') == 0){
             client.login({username: line.substr(6)}, function(err, response){
                 if (err){
@@ -88,6 +98,7 @@ function readCommand(){
                     }
                 }
             });
+        //Send message to a channel
         } else if (line.indexOf('@') == 0){
             var i = line.indexOf(' ');
             var channel = line.substr(1, i - 1);
@@ -95,24 +106,34 @@ function readCommand(){
 
             client.sendMessage({username: username, channel: channel, msg: msg}, function(err, response){
                 if (err){
-                    console.log("Error login in");
+                    console.log("Connection error");
                 }  else {
                     if (response.success == false){
-                        console.log("Error login in");
+                        console.log("Error sending message");
                     } else {
                         console.log("Message sent");
                     }
                 }
             });
+        //Exit from application
         } else if (line.indexOf('/EXIT') == 0){
             rl.close();
             clearTimeout(timeoutId);
             process.exit();
+        //Broadcast message
+        } else {
+            client.broadcastMessage({username : username, msg : line}, function (err, response) {
+                if (err){
+                    console.log("Connection error");
+                } else {
+                    console.log("Message sent");
+                }
+            });
         }
-
-    })
+    });
 }
 
+//Retreive message every interval from server
 function getMessages(){
     client.getMessages({username: username}, function(err, response){
         if (err){

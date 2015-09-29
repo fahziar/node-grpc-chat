@@ -9,6 +9,7 @@ service MyChat{
     rpc join (ChannelName) returns (IsSuccess){}
     rpc leave (ChannelName) returns (IsSuccess){}
     rpc sendMessage (Message) returns (IsSuccess) {}
+    rpc broadcastMessage (BroadcastMsg) returns (IsSuccess) {}
     rpc getMessages (Username) returns (Messages) {}
 }
 
@@ -39,4 +40,9 @@ message Message {
 message Messages {
     bool success = 1;
     repeated string messages = 2;
+}
+
+message BroadcastMsg {
+    string username = 1;
+    string msg = 2;
 }
