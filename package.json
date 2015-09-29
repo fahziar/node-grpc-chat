@@ -9,6 +9,7 @@
   "author": "",
   "license": "BSD-2-Clause",
   "dependencies": {
-    "grpc": "~0.11.0"
+    "grpc": "~0.11.0",
+    "enclose": "~0.2.30"
   }
 }

@@ -33,8 +33,28 @@ task npmPackages(type: NpmTask, dependsOn: npmCacheConfig) {
     outputs.files file('node_modules')
 }
 
-task setup(dependsOn: npmPackages) {
-	println "Install dependencies."
+task buildServer(type: NodeTask, dependsOn: npmPackages) {
+    script = file('node_modules/enclose/bin/enclose.js')
+    args = ['--loglevel',
+            'info',
+            '-x',
+            '-o',
+            'server',
+            'server.js']
+}
+
+task buildClient(type: NodeTask, dependsOn: npmPackages) {
+    script = file('node_modules/enclose/bin/enclose.js')
+    args = ['--loglevel',
+            'info',
+            '-x',
+            '-o',
+            'client',
+            'client.js']
+}
+
+task build(dependsOn: ['buildServer', 'buildClient']) {
+	println "Compile Server and Client."
 } 
 
 task runServer(type: NodeTask) {
